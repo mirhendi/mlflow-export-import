@@ -67,10 +67,11 @@ class RunExporter():
                 fs.mkdirs(dst_path)
                 self.mlflow_client.download_artifacts(run.info.run_id,"", dst_path=mk_local_path(dst_path))
             notebook = tags.get(TAG_NOTEBOOK_PATH, None)
+            verbose = False
             if notebook is not None:
                 if len(self.notebook_formats) > 0:
                     self.export_notebook(output_dir, notebook, run.data.tags, fs)
-            elif len(self.notebook_formats) > 0:
+            elif len(self.notebook_formats) > 0 and verbose:
                 print(f"WARNING: Cannot export notebook since tag '{TAG_NOTEBOOK_PATH}' is not set.")
             return True
         except Exception as e:
