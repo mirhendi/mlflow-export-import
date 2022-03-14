@@ -65,7 +65,7 @@ class RunImporter():
         src_run_path = os.path.join(input_dir,"run.json")
         src_run_dct = utils.read_json_file(src_run_path)
 
-        run = self.mlflow_client.create_run(exp.experiment_id)
+        run = self.mlflow_client.create_run(experiment_id=exp.experiment_id, start_time=src_run_dct["info"]["start_time"])
         run_id = run.info.run_id
         try:
             self._import_run_data(src_run_dct, run_id, src_run_dct["info"]["user_id"])
@@ -74,9 +74,9 @@ class RunImporter():
                 self.mlflow_client.log_artifacts(run_id, mk_local_path(path))
             if self.mlmodel_fix:
                 self._update_mlmodel_run_id(run_id)
-            self.mlflow_client.set_terminated(run_id, RunStatus.to_string(RunStatus.FINISHED))
+            self.mlflow_client.set_terminated(run_id, src_run_dct["info"]["status"], src_run_dct["info"]["end_time"])
         except Exception as e:
-            self.mlflow_client.set_terminated(run_id, RunStatus.to_string(RunStatus.FAILED))
+            self.mlflow_client.set_terminated(run_id, src_run_dct["info"]["status"], src_run_dct["info"]["end_time"])
             import traceback
             traceback.print_exc()
             raise MlflowExportImportException from e
