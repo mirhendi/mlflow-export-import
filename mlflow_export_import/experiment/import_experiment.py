@@ -72,7 +72,7 @@ class ExperimentImporter():
             ac_list.append(permission_dic)
         data = {}
         data['access_control_list'] = ac_list
-
+        print(data)
         self.dbx_client.post("preview/permissions/experiments/{}".format(dst_exp_id), data)
         print("Experiment permissions imported")
 @click.command()
