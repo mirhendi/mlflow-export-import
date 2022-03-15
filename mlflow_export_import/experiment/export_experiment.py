@@ -81,11 +81,11 @@ class ExperimentExporter():
 
     def _export_permissions(self, src_exp_id, fs, output_dir):
         try:
-            print("Exporting regular experiment permissions")
             permissions_data = self.dbx_client.get("preview/permissions/experiments/{}".format(src_exp_id))
+            print("Exporting regular experiment permissions")
         except:
+            permissions_data = self.dbx_client.get("permissions/notebooks/{}".format(src_exp_id))
             print("Exporting notebook experiment permissions")
-            permissions_data = self.dbx_client.get("/permissions/notebooks/{}".format(src_exp_id))
 
         path = os.path.join(output_dir, "permissions.json")
         utils.write_json_file(fs, path, permissions_data)
