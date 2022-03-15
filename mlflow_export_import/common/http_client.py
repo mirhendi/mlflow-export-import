@@ -61,7 +61,7 @@ class HttpClient():
         return rsp
 
     def put(self, resource, data):
-        return json.loads(self._post(resource, data).text)
+        return json.loads(self._put(resource, data).text)
 
     def _mk_headers(self):
         headers = { "User-Agent": USER_AGENT }
