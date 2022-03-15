@@ -56,6 +56,8 @@ def set_experiment(dbx_client, exp_name):
     if utils.importing_into_databricks():
         create_workspace_dir(dbx_client, os.path.dirname(exp_name))
     mlflow.set_experiment(exp_name)
+    experiment = mlflow.get_experiment_by_name(exp_name)
+    return experiment.experiment_id
 
 # BUG
 def _get_experiment(mlflow_client, exp_id_or_name):

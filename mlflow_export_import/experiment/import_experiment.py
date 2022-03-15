@@ -35,7 +35,7 @@ class ExperimentImporter():
         :param: input_dir: Source experiment directory.
         :return: A map of source run IDs and destination run.info.
         """
-        mlflow_utils.set_experiment(self.dbx_client, exp_name)
+        exp_id = mlflow_utils.set_experiment(self.dbx_client, exp_name)
         manifest_path = os.path.join(input_dir,"manifest.json")
         dct = utils.read_json_file(manifest_path)
         run_ids = dct["export_info"]["ok_runs"]
@@ -52,9 +52,29 @@ class ExperimentImporter():
         if len(failed_run_ids) > 0:
             print(f"Warning: {len(failed_run_ids)} failed runs were not imported - see {manifest_path}")
         utils.nested_tags(self.mlflow_client, run_ids_map)
+
+        self._import_permissions(exp_id, input_dir)
         return run_info_map
 
+    def _import_permissions(self, dst_exp_id, input_dir):
+        permissions_path = os.path.join(input_dir, "permissions.json")
+        permissions_data = utils.read_json_file(permissions_path)
 
+        ac_list = []
+        for each_ac in permissions_data['access_control_list']:
+            permission_dic = {}
+            try:
+                permission_dic['user_name'] = each_ac['user_name']
+            except:
+                permission_dic['group_name'] = each_ac['group_name']
+
+            permission_dic['permission_level'] = each_ac['all_permissions'][0]['permission_level']
+            ac_list.append(permission_dic)
+        data = {}
+        data['access_control_list'] = ac_list
+
+        self.dbx_client.post("preview/permissions/experiments/{}".format(dst_exp_id), data)
+        print("Experiment permissions imported")
 @click.command()
 @click.option("--input-dir", 
     help="Input path - directory", 
