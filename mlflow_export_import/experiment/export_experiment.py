@@ -10,6 +10,7 @@ from mlflow_export_import.common import mlflow_utils
 from mlflow_export_import.common.search_runs_iterator import SearchRunsIterator
 from mlflow_export_import.run.export_run import RunExporter
 from mlflow_export_import import utils, click_doc
+from mlflow_export_import.common.http_client import DatabricksHttpClient
 
 class ExperimentExporter():
     def __init__(self, mlflow_client=None, export_metadata_tags=False, notebook_formats=[]):
@@ -20,6 +21,7 @@ class ExperimentExporter():
         """
         self.mlflow_client = mlflow_client or mlflow.tracking.MlflowClient()
         self.run_exporter = RunExporter(self.mlflow_client, export_metadata_tags, notebook_formats)
+        self.dbx_client = DatabricksHttpClient()
 
     def export_experiment(self, exp_id_or_name, output_dir, run_ids=None):
         """
@@ -62,7 +64,10 @@ class ExperimentExporter():
         else:
             print(f"{len(ok_run_ids)/j} runs succesfully exported {msg}")
             print(f"{len(failed_run_ids)/j} runs failed {msg}")
-        return len(ok_run_ids), len(failed_run_ids) 
+
+        self._export_permissions(exp_id, fs, output_dir)
+
+        return len(ok_run_ids), len(failed_run_ids)
 
     def _export_run(self, idx, run, output_dir, ok_run_ids, failed_run_ids):
         run_dir = os.path.join(output_dir, run.info.run_id)
@@ -72,6 +77,12 @@ class ExperimentExporter():
             ok_run_ids.append(run.info.run_id)
         else:
             failed_run_ids.append(run.info.run_id)
+
+    def _export_permissions(self, src_exp_id, fs, output_dir):
+        permissions_data = self.dbx_client.get("preview/permissions/experiments/{}".format(src_exp_id))
+        path = os.path.join(output_dir, "permissions.json")
+        utils.write_json_file(fs, path, permissions_data)
+
 
 @click.command()
 @click.option("--experiment",
