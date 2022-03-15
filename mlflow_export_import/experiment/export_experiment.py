@@ -80,7 +80,7 @@ class ExperimentExporter():
 
     def _export_permissions(self, src_exp_id, fs, output_dir):
         print(src_exp_id)
-        permissions_data = self.dbx_client.get("preview/permissions/experiments/{}/permissionLevels".format(src_exp_id))
+        permissions_data = self.dbx_client.get("preview/permissions/experiments/{}".format(src_exp_id))
         path = os.path.join(output_dir, "permissions.json")
         utils.write_json_file(fs, path, permissions_data)
 
