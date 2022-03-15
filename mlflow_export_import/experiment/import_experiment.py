@@ -73,7 +73,7 @@ class ExperimentImporter():
         data = {}
         data['access_control_list'] = ac_list
         print(data)
-        self.dbx_client.post(resource="preview/permissions/experiments/{}".format(dst_exp_id), data=data)
+        self.dbx_client.put(resource="preview/permissions/experiments/{}".format(dst_exp_id), data=data)
         print("Experiment permissions imported")
 @click.command()
 @click.option("--input-dir", 

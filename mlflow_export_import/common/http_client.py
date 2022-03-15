@@ -43,11 +43,24 @@ class HttpClient():
         uri = self._mk_uri(resource)
         data = json.dumps(data)
         rsp = requests.post(uri, headers=self._mk_headers(), data=data)
-        print(rsp)
         self._check_response(rsp,uri)
         return rsp
 
     def post(self, resource, data):
+        return json.loads(self._post(resource, data).text)
+
+    def _put(self, resource, data):
+        """ Executes an HTTP PUT call
+        :param resource: Relative path name of resource such as runs/search
+        :param data: put request payload
+        """
+        uri = self._mk_uri(resource)
+        data = json.dumps(data)
+        rsp = requests.put(uri, headers=self._mk_headers(), data=data)
+        self._check_response(rsp,uri)
+        return rsp
+
+    def put(self, resource, data):
         return json.loads(self._post(resource, data).text)
 
     def _mk_headers(self):
