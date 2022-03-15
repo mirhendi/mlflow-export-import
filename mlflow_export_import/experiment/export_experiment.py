@@ -12,6 +12,7 @@ from mlflow_export_import.run.export_run import RunExporter
 from mlflow_export_import import utils, click_doc
 from mlflow_export_import.common.http_client import DatabricksHttpClient
 
+
 class ExperimentExporter():
     def __init__(self, mlflow_client=None, export_metadata_tags=False, notebook_formats=[]):
         """
@@ -34,7 +35,7 @@ class ExperimentExporter():
         exp_id = exp.experiment_id
         print(f"Exporting experiment '{exp.name}' (ID {exp.experiment_id}) to '{output_dir}'")
         fs = _filesystem.get_filesystem(output_dir)
-        print("Filesystem:",type(fs).__name__)
+        print("Filesystem:", type(fs).__name__)
         fs.mkdirs(output_dir)
         exp = self.mlflow_client.get_experiment(exp_id)
         dct = {"experiment": utils.strip_underscores(exp)}
@@ -42,28 +43,28 @@ class ExperimentExporter():
         failed_run_ids = []
         j = -1
         if run_ids:
-            for j,run_id in enumerate(run_ids):
+            for j, run_id in enumerate(run_ids):
                 run = self.mlflow_client.get_run(run_id)
                 self._export_run(j, run, output_dir, ok_run_ids, failed_run_ids)
         else:
-            for j,run in enumerate(SearchRunsIterator(self.mlflow_client, exp_id)):
+            for j, run in enumerate(SearchRunsIterator(self.mlflow_client, exp_id)):
                 self._export_run(j, run, output_dir, ok_run_ids, failed_run_ids)
-        dct["export_info"] = { 
-            "export_time": utils.get_now_nice(), 
-             "num_total_runs": (j+1),
-             "num_ok_runs": len(ok_run_ids),
-             "ok_runs": ok_run_ids,
-             "num_failed_runs": len(failed_run_ids),
-             "failed_runs": failed_run_ids }
+        dct["export_info"] = {
+            "export_time": utils.get_now_nice(),
+            "num_total_runs": (j + 1),
+            "num_ok_runs": len(ok_run_ids),
+            "ok_runs": ok_run_ids,
+            "num_failed_runs": len(failed_run_ids),
+            "failed_runs": failed_run_ids}
 
-        path = os.path.join(output_dir,"manifest.json")
+        path = os.path.join(output_dir, "manifest.json")
         utils.write_json_file(fs, path, dct)
         msg = f"for experiment '{exp.name}' (ID: {exp.experiment_id})"
         if len(failed_run_ids) == 0:
             print(f"All {len(ok_run_ids)} runs succesfully exported {msg}")
         else:
-            print(f"{len(ok_run_ids)/j} runs succesfully exported {msg}")
-            print(f"{len(failed_run_ids)/j} runs failed {msg}")
+            print(f"{len(ok_run_ids) / j} runs succesfully exported {msg}")
+            print(f"{len(failed_run_ids) / j} runs failed {msg}")
 
         self._export_permissions(exp_id, fs, output_dir)
 
@@ -71,7 +72,7 @@ class ExperimentExporter():
 
     def _export_run(self, idx, run, output_dir, ok_run_ids, failed_run_ids):
         run_dir = os.path.join(output_dir, run.info.run_id)
-        print(f"Exporting run {idx+1}: {run.info.run_id}")
+        print(f"Exporting run {idx + 1}: {run.info.run_id}")
         res = self.run_exporter.export_run(run.info.run_id, run_dir)
         if res:
             ok_run_ids.append(run.info.run_id)
@@ -79,42 +80,45 @@ class ExperimentExporter():
             failed_run_ids.append(run.info.run_id)
 
     def _export_permissions(self, src_exp_id, fs, output_dir):
-        print(src_exp_id)
-        permissions_data = self.dbx_client.get("preview/permissions/experiments/{}".format(src_exp_id))
+        try:
+            permissions_data = self.dbx_client.get("preview/permissions/experiments/{}".format(src_exp_id))
+        except:
+            permissions_data = self.dbx_client.get("/permissions/notebooks/{}".format(src_exp_id))
+
         path = os.path.join(output_dir, "permissions.json")
         utils.write_json_file(fs, path, permissions_data)
 
 
 @click.command()
 @click.option("--experiment",
-    help="Experiment name or ID.", 
-    type=str,
-    required=True
-)
+              help="Experiment name or ID.",
+              type=str,
+              required=True
+              )
 @click.option("--output-dir",
-    help="Output directory.", 
-    type=str,
-    required=True
-)
+              help="Output directory.",
+              type=str,
+              required=True
+              )
 @click.option("--export-metadata-tags",
-    help=click_doc.export_metadata_tags, 
-    type=bool, 
-    default=False, 
-    show_default=True
-)
+              help=click_doc.export_metadata_tags,
+              type=bool,
+              default=False,
+              show_default=True
+              )
 @click.option("--notebook-formats",
-    help=click_doc.notebook_formats, 
-    type=str, 
-    default="", 
-    show_default=True
-)
-
+              help=click_doc.notebook_formats,
+              type=str,
+              default="",
+              show_default=True
+              )
 def main(experiment, output_dir, export_metadata_tags, notebook_formats):
     print("Options:")
-    for k,v in locals().items():
+    for k, v in locals().items():
         print(f"  {k}: {v}")
     exporter = ExperimentExporter(None, export_metadata_tags, utils.string_to_list(notebook_formats))
     exporter.export_experiment(experiment, output_dir)
+
 
 if __name__ == "__main__":
     main()
