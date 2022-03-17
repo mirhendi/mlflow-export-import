@@ -75,6 +75,9 @@ class BaseModelImporter():
             if not "RESOURCE_ALREADY_EXISTS: Registered Model" in str(e):
                 raise e
             print(f"Registered model '{model_name}' already exists")
+
+        self._import_permissions(model_name, input_dir)
+        print("Model's permissions imported ")
         return model_dct
 
     def _import_permissions(self, model_name, input_dir):
@@ -107,9 +110,6 @@ class ModelImporter(BaseModelImporter):
 
     def import_model(self, model_name, input_dir, experiment_name, delete_model=False, verbose=False, sleep_time=30):
         model_dct = self._import_model(model_name, input_dir, delete_model, verbose, sleep_time)
-        self._import_permissions(model_name, input_dir)
-        print("Model's permissions imported ")
-
         mlflow.set_experiment(experiment_name)
         print("Importing versions:")
         for vr in model_dct["latest_versions"]:
