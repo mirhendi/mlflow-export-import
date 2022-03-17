@@ -9,6 +9,7 @@ from mlflow.exceptions import RestException
 from mlflow_export_import.run.import_run import RunImporter
 from mlflow_export_import import utils, click_doc
 from mlflow_export_import.common import model_utils
+from mlflow_export_import.common.http_client import MlflowHttpClient, DatabricksHttpClient
 
 class BaseModelImporter():
     """ Base class of ModelImporter subclasses. """
@@ -21,6 +22,8 @@ class BaseModelImporter():
         self.mlflow_client = mlflow.tracking.MlflowClient()
         self.run_importer = run_importer if run_importer else RunImporter(self.mlflow_client, mlmodel_fix=True, import_mlflow_tags=False)
         self.await_creation_for = await_creation_for 
+        self.http_client = MlflowHttpClient()
+        self.dbx_client = DatabricksHttpClient()
 
     def _import_version(self, model_name, src_vr, dst_run_id, dst_source, sleep_time):
         """
@@ -74,6 +77,29 @@ class BaseModelImporter():
             print(f"Registered model '{model_name}' already exists")
         return model_dct
 
+    def _import_permissions(self, model_name, input_dir):
+        model = self.http_client.get("databricks/registered-models/get", {"name": model_name})
+        model_id = model['registered_model_databricks']['id']
+
+        permissions_path = os.path.join(input_dir, "permissions.json")
+        permissions_data = utils.read_json_file(permissions_path)
+
+        ac_list = []
+        for each_ac in permissions_data['access_control_list']:
+            permission_dic = {}
+            try:
+                permission_dic['user_name'] = each_ac['user_name']
+            except:
+                permission_dic['group_name'] = each_ac['group_name']
+
+            permission_dic['permission_level'] = each_ac['all_permissions'][0]['permission_level']
+            ac_list.append(permission_dic)
+        data = {'access_control_list': ac_list}
+
+        self.dbx_client.put(resource="preview/permissions/registered-models/{}".format(model_id), data=data)
+        print("Experiment permissions imported")
+
+
 class ModelImporter(BaseModelImporter):
     """ Low-level 'point' model importer  """
     def __init__(self, run_importer=None, await_creation_for=None):
@@ -88,6 +114,8 @@ class ModelImporter(BaseModelImporter):
             self.import_version(model_name, vr, run_id, sleep_time)
         if verbose:
             model_utils.dump_model_versions(self.mlflow_client, model_name)
+        self._import_permissions(model_name, input_dir)
+        print("Model's permissions imported ")
 
     def _import_run(self, input_dir, experiment_name, vr):
         run_id = vr["run_id"]
