@@ -71,12 +71,12 @@ class BaseModelImporter():
             tags = { e["key"]:e["value"] for e in model_dct.get("tags", {}) }
             x = self.mlflow_client.create_registered_model(model_name, tags, model_dct.get("description"))
             print(f"Created new registered model '{model_name}'")
+            self._import_permissions(model_name, input_dir)
         except RestException as e:
             if not "RESOURCE_ALREADY_EXISTS: Registered Model" in str(e):
                 raise e
             print(f"Registered model '{model_name}' already exists")
 
-        self._import_permissions(model_name, input_dir)
         return model_dct
 
     def _import_permissions(self, model_name, input_dir):
