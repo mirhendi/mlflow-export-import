@@ -80,7 +80,7 @@ class ModelExporter():
         return manifest
 
     def _export_permissions(self, model_name, output_dir):
-        model = self.MlflowHttpClient.get("databricks/registered-models/get", {"name": model_name})
+        model = self.http_client.get("databricks/registered-models/get", {"name": model_name})
         model_id = model['registered_model_databricks']['id']
         permissions_data = self.dbx_client.get("preview/permissions/registered/{}".format(model_id))
         print("Exporting model's permissions")
