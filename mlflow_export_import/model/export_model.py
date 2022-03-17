@@ -82,7 +82,7 @@ class ModelExporter():
     def _export_permissions(self, model_name, output_dir):
         model = self.http_client.get("databricks/registered-models/get", {"name": model_name})
         model_id = model['registered_model_databricks']['id']
-        permissions_data = self.dbx_client.get("preview/permissions/registered/{}".format(model_id))
+        permissions_data = self.dbx_client.get("preview/permissions/registered-models/{}".format(model_id))
         print("Exporting model's permissions")
 
         fs = _filesystem.get_filesystem(output_dir)
