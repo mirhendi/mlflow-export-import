@@ -107,6 +107,9 @@ class ModelImporter(BaseModelImporter):
 
     def import_model(self, model_name, input_dir, experiment_name, delete_model=False, verbose=False, sleep_time=30):
         model_dct = self._import_model(model_name, input_dir, delete_model, verbose, sleep_time)
+        self._import_permissions(model_name, input_dir)
+        print("Model's permissions imported ")
+
         mlflow.set_experiment(experiment_name)
         print("Importing versions:")
         for vr in model_dct["latest_versions"]:
@@ -114,8 +117,6 @@ class ModelImporter(BaseModelImporter):
             self.import_version(model_name, vr, run_id, sleep_time)
         if verbose:
             model_utils.dump_model_versions(self.mlflow_client, model_name)
-        self._import_permissions(model_name, input_dir)
-        print("Model's permissions imported ")
 
     def _import_run(self, input_dir, experiment_name, vr):
         run_id = vr["run_id"]
