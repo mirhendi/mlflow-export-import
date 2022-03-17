@@ -5,7 +5,7 @@ Export a registered model and all the experiment runs associated with each versi
 import os
 import click
 import mlflow
-from mlflow_export_import.common.http_client import MlflowHttpClient
+from mlflow_export_import.common.http_client import MlflowHttpClient, DatabricksHttpClient
 from mlflow_export_import.common import filesystem as _filesystem
 from mlflow_export_import.run.export_run import RunExporter
 from mlflow_export_import import utils, click_doc
@@ -21,6 +21,7 @@ class ModelExporter():
         """
         self.mlflow_client = mlflow_client or mlflow.tracking.MlflowClient()
         self.http_client = MlflowHttpClient()
+        self.dbx_client = DatabricksHttpClient()
         self.run_exporter = RunExporter(self.mlflow_client, export_metadata_tags=export_metadata_tags, notebook_formats=notebook_formats)
         self.stages = self._normalize_stages(stages)
         self.export_run = export_run
@@ -33,6 +34,7 @@ class ModelExporter():
         """
         try:
             self._export_model(model_name, output_dir)
+            self._export_permissions(model_name, output_dir)
             return True, model_name
         except Exception as e:
             print("ERROR:",e)
@@ -76,6 +78,16 @@ class ModelExporter():
         path = os.path.join(output_dir, "model.json")
         utils.write_json_file(fs, path, model)
         return manifest
+
+    def _export_permissions(self, model_name, output_dir):
+        model = self.MlflowHttpClient.get("databricks/registered-models/get", {"name": model_name})
+        model_id = model['registered_model_databricks']['id']
+        permissions_data = self.dbx_client.get("preview/permissions/registered/{}".format(model_id))
+        print("Exporting model's permissions")
+
+        fs = _filesystem.get_filesystem(output_dir)
+        path = os.path.join(output_dir, "permissions.json")
+        utils.write_json_file(fs, path, permissions_data)
 
     def _normalize_stages(self, stages):
         from mlflow.entities.model_registry import model_version_stages
