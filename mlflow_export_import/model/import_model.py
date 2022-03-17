@@ -77,7 +77,6 @@ class BaseModelImporter():
             print(f"Registered model '{model_name}' already exists")
 
         self._import_permissions(model_name, input_dir)
-        print("Model's permissions imported ")
         return model_dct
 
     def _import_permissions(self, model_name, input_dir):
@@ -100,7 +99,7 @@ class BaseModelImporter():
         data = {'access_control_list': ac_list}
 
         self.dbx_client.put(resource="preview/permissions/registered-models/{}".format(model_id), data=data)
-        print("Experiment permissions imported")
+        print("Model's permissions imported")
 
 
 class ModelImporter(BaseModelImporter):
