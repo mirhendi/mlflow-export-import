@@ -98,8 +98,12 @@ class BaseModelImporter():
             ac_list.append(permission_dic)
         data = {'access_control_list': ac_list}
 
-        self.dbx_client.put(resource="preview/permissions/registered-models/{}".format(model_id), data=data)
-        print("Model's permissions imported")
+        try:
+            self.dbx_client.put(resource="preview/permissions/registered-models/{}".format(model_id), data=data)
+            print("Model's permissions imported for", model_id)
+        except:
+            print("Model's permissions NOT imported for", model_id)
+
 
 
 class ModelImporter(BaseModelImporter):

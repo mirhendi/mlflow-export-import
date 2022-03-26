@@ -51,7 +51,12 @@ class ExperimentImporter():
             print(f"Warning: {len(failed_run_ids)} failed runs were not imported - see {manifest_path}")
         utils.nested_tags(self.mlflow_client, run_ids_map)
 
-        self._import_permissions(exp_id, input_dir)
+        try:
+            self._import_permissions(exp_id, input_dir)
+            print("Experiment permissions imported for exp", exp_id)
+        except:
+            print("Experiment permissions NOT imported for exp", exp_id)
+
         return run_info_map
 
     def _import_permissions(self, dst_exp_id, input_dir):
@@ -72,7 +77,7 @@ class ExperimentImporter():
         data['access_control_list'] = ac_list
         print(data)
         self.dbx_client.put(resource="preview/permissions/experiments/{}".format(dst_exp_id), data=data)
-        print("Experiment permissions imported")
+
 @click.command()
 @click.option("--input-dir", 
     help="Input path - directory", 
