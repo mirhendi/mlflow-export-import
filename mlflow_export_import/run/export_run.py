@@ -50,7 +50,11 @@ class RunExporter():
         run = self.mlflow_client.get_run(run_id)
         fs.mkdirs(output_dir)
         tags =  utils.create_tags_for_metadata(self.mlflow_client, run, self.export_metadata_tags)
-        dct = { "info": utils.strip_underscores(run.info) , 
+        dct = { "export_info": {
+                    "mlflow_version": mlflow.__version__,
+                    "mlflow_tracking_uri": mlflow.get_tracking_uri(),
+                    "export_time": utils.get_now_nice() },
+                "info": utils.strip_underscores(run.info) , 
                 "params": run.data.params,
                 "metrics": self.get_metrics_with_steps(run),
                 "tags": tags,
@@ -90,8 +94,7 @@ class RunExporter():
            "mlflow.databricks.notebookPath": notebook_path,
            "mlflow.databricks.export-notebook-revision": revision_id }
         path = os.path.join(notebook_dir, "manifest.json")
-        with open(path, "w") as f:
-            f.write(json.dumps(manifest,indent=2)+"\n")
+        fs.write(path, (json.dumps(manifest,indent=2)+"\n"))
         for format in self.notebook_formats:
             self.export_notebook_format(notebook_dir, notebook, format, format.lower(), notebook_name, revision_id)
 
@@ -137,7 +140,10 @@ def main(run_id, output_dir, export_metadata_tags, notebook_formats):
     print("Options:")
     for k,v in locals().items():
         print(f"  {k}: {v}")
-    exporter = RunExporter(None, export_metadata_tags, utils.string_to_list(notebook_formats))
+    exporter = RunExporter(
+      mlflow_client=None, 
+      export_metadata_tags=export_metadata_tags, 
+      notebook_formats=utils.string_to_list(notebook_formats))
     exporter.export_run(run_id, output_dir)
 
 if __name__ == "__main__":

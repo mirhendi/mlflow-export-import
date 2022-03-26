@@ -111,7 +111,6 @@ Options:
                                   user ID. Source user ID is ignored when
                                   importing into Databricks since setting it
                                   is not allowed.
-  --import-mlflow-tags BOOLEAN    Import mlflow tags
   --import-metadata-tags BOOLEAN  Import mlflow_export_import tags
   --dst-notebook-dir TEXT         Databricks destination workpsace base
                                   directory for notebook. A run ID will be
@@ -128,14 +127,11 @@ import-experiment \
 
 #### Databricks import examples
 
-When importing into Databricks MLflow, make sure you set `--import-mlflow-tags False` since Databricks does not allow you to set `mlflow` tags unlike open source MLflow.
-
 ```
 export MLFLOW_TRACKING_URI=databricks
 import-experiment \
   --experiment-name /Users/me@mycompany.com/imported/SklearnWine \
   --input-dir exported_experiments/3532228 \
-  --import-mlflow-tags False
 ```
 
 
@@ -181,7 +177,7 @@ artifacts
     model.pkl
 ```
 Sample run.json:
-[OSS](samples/oss_mlflow/experiment_list/1/6ccadf17812d43929b093d75cca1c33f/run.json)
+[OSS](samples/oss_mlflow/experiments/sklearn_wine/1/6ccadf17812d43929b093d75cca1c33f/run.json)
  \- [Databricks](samples/databricks/experiments/sklearn_wine/16c36560c57a43fdb46e98f88a8d8819/run.json).
 ```
 {   
@@ -195,8 +191,20 @@ Sample run.json:
     "max_leaf_nodes": "32"
   },
   "metrics": {
-    "mae": 0.5845562996214364,
-    "r2": 0.28719674214710467,
+    "rmse": [
+      {
+        "value": 0.7367947360663162,
+        "timestamp": 1647391746393,
+        "step": 0
+      }
+    ],
+   "r2": [
+      {
+        "value": 0.28100217442439346,
+        "timestamp": 1647391746422,
+        "step": 0
+      }
+    ]
   },
   "tags": {
     "mlflow.source.git.commit": "a42b9682074f4f07f1cb2cf26afedee96f357f83",
@@ -236,7 +244,6 @@ Options:
                                   importing into Databricks since setting it
                                   is not allowed.  [default: False]
 
-  --import-mlflow-tags BOOLEAN    Import mlflow tags.  [default: False]
   --import-metadata-tags BOOLEAN  Import mlflow_export_import tags.  [default: False]
   --dst-notebook-dir TEXT         Databricks destination workpsace directory
                                   for notebook import.
@@ -259,15 +266,12 @@ import-run \
 
 ##### Databricks import example
 
-When importing into Databricks MLflow, make sure you set `--import-mlflow-tags False` since Databricks does not allow you to set `mlflow` tags unlike open source MLflow.
-
 ```
 export MLFLOW_TRACKING_URI=databricks
 run.import-run \
   --run-id 50fa90e751eb4b3f9ba9cef0efe8ea30 \
   --input out \
   --experiment-name /Users/me@mycompany.com/imported/SklearnWine \
-  --import-mlflow-tags False
 ```
 
 ## Registered Models

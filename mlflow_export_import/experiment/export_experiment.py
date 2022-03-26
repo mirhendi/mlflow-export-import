@@ -49,13 +49,15 @@ class ExperimentExporter():
         else:
             for j, run in enumerate(SearchRunsIterator(self.mlflow_client, exp_id)):
                 self._export_run(j, run, output_dir, ok_run_ids, failed_run_ids)
-        dct["export_info"] = {
+        dct["export_info"] = { 
+            "mlflow_version": mlflow.__version__,
+            "mlflow_tracking_uri": mlflow.get_tracking_uri(),
             "export_time": utils.get_now_nice(),
-            "num_total_runs": (j + 1),
+            "num_total_runs": (j+1),
             "num_ok_runs": len(ok_run_ids),
             "ok_runs": ok_run_ids,
             "num_failed_runs": len(failed_run_ids),
-            "failed_runs": failed_run_ids}
+            "failed_runs": failed_run_ids }
 
         path = os.path.join(output_dir, "manifest.json")
         utils.write_json_file(fs, path, dct)
@@ -118,7 +120,10 @@ def main(experiment, output_dir, export_metadata_tags, notebook_formats):
     print("Options:")
     for k, v in locals().items():
         print(f"  {k}: {v}")
-    exporter = ExperimentExporter(None, export_metadata_tags, utils.string_to_list(notebook_formats))
+    exporter = ExperimentExporter(
+        mlflow_client=None,
+        export_metadata_tags=export_metadata_tags,
+        notebook_formats=utils.string_to_list(notebook_formats))
     exporter.export_experiment(experiment, output_dir)
 
 
