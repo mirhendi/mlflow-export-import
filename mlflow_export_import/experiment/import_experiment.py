@@ -54,9 +54,9 @@ class ExperimentImporter():
         try:
             self._import_permissions(exp_id, input_dir)
             print("Experiment permissions imported for exp", exp_id)
-        except:
+        except Exception as e:
             print("Experiment permissions NOT imported for exp", exp_id)
-
+            print(e)
         return run_info_map
 
     def _import_permissions(self, dst_exp_id, input_dir):
@@ -79,29 +79,29 @@ class ExperimentImporter():
         self.dbx_client.put(resource="preview/permissions/experiments/{}".format(dst_exp_id), data=data)
 
 @click.command()
-@click.option("--input-dir", 
-    help="Input path - directory", 
+@click.option("--input-dir",
+    help="Input path - directory",
     type=str,
     required=True
 )
-@click.option("--experiment-name", 
-    help="Destination experiment name", 
+@click.option("--experiment-name",
+    help="Destination experiment name",
     type=str,
     required=True
 )
-@click.option("--just-peek", 
-    help="Just display experiment metadata - do not import", 
-    type=bool, 
+@click.option("--just-peek",
+    help="Just display experiment metadata - do not import",
+    type=bool,
     default=False
 )
-@click.option("--use-src-user-id", 
-    help=click_doc.use_src_user_id, 
-    type=bool, 
+@click.option("--use-src-user-id",
+    help=click_doc.use_src_user_id,
+    type=bool,
     default=False
 )
-@click.option("--import-metadata-tags", 
-    help="Import mlflow_export_import tags", 
-    type=bool, 
+@click.option("--import-metadata-tags",
+    help="Import mlflow_export_import tags",
+    type=bool,
     default=False
 )
 @click.option("--dst-notebook-dir",
@@ -119,8 +119,8 @@ def main(input_dir, experiment_name, just_peek, use_src_user_id, import_metadata
         peek_at_experiment(input_dir)
     else:
         importer = ExperimentImporter(
-            mlflow_client=None, 
-            use_src_user_id=use_src_user_id, 
+            mlflow_client=None,
+            use_src_user_id=use_src_user_id,
             import_metadata_tags=import_metadata_tags)
         importer.import_experiment(experiment_name, input_dir, dst_notebook_dir)
 
