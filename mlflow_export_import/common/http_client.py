@@ -63,6 +63,20 @@ class HttpClient():
     def put(self, resource, data):
         return json.loads(self._put(resource, data).text)
 
+    def _patch(self, resource, data):
+        """ Executes an HTTP patch call
+        :param resource: Relative path name of resource such as runs/search
+        :param data: put request payload
+        """
+        uri = self._mk_uri(resource)
+        data = json.dumps(data)
+        rsp = requests.patch(uri, headers=self._mk_headers(), data=data)
+        self._check_response(rsp,uri)
+        return rsp
+
+    def patch(self, resource, data):
+        return json.loads(self._patch(resource, data).text)
+
     def _mk_headers(self):
         headers = { "User-Agent": USER_AGENT }
         if self.token:

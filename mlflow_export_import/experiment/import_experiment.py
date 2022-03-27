@@ -63,20 +63,22 @@ class ExperimentImporter():
         permissions_path = os.path.join(input_dir, "permissions.json")
         permissions_data = utils.read_json_file(permissions_path)
 
-        ac_list = []
         for each_ac in permissions_data['access_control_list']:
             permission_dic = {}
+            data = {}
             try:
                 permission_dic['user_name'] = each_ac['user_name']
             except:
                 permission_dic['group_name'] = each_ac['group_name']
 
             permission_dic['permission_level'] = each_ac['all_permissions'][0]['permission_level']
-            ac_list.append(permission_dic)
-        data = {}
-        data['access_control_list'] = ac_list
-        print(data)
-        self.dbx_client.put(resource="preview/permissions/experiments/{}".format(dst_exp_id), data=data)
+            data['access_control_list'] = [permission_dic]
+            try:
+                self.dbx_client.patch(resource="preview/permissions/experiments/{}".format(dst_exp_id), data=data)
+                print("One permission imported")
+            except Exception as e:
+                print(e)
+                print("One permission couldn't be imported")
 
 @click.command()
 @click.option("--input-dir",
