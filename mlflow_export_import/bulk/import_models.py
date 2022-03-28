@@ -24,7 +24,8 @@ def _remap(run_info_map):
 
 def _import_experiment(importer, exp_name, exp_input_dir):
     try:
-        importer.import_experiment(exp_name, exp_input_dir)
+        _run_info_map = importer.import_experiment(exp_name, exp_input_dir)
+        return _run_info_map
     except Exception:
         import traceback
         traceback.print_exc()
@@ -67,8 +68,10 @@ def import_experiments(input_dir, experiment_name_prefix, use_src_user_id, impor
             thread_f[exp["id"]] = executor.submit(_import_experiment, importer, exp_name, exp_input_dir)
 
     run_info_map = {}
+    exceptions = {}
     for each_f in thread_f:
         run_info_map[each_f] = thread_f[each_f].result()
+
     print(run_info_map)
     duration = round(time.time() - start_time, 1)
     if len(exceptions) > 0:
