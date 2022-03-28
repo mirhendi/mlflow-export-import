@@ -22,27 +22,52 @@ def _remap(run_info_map):
             res[src_run_id] = run_info
     return res
 
+def _import_experiment(importer, exp_name, exp_input_dir):
+    try:
+        importer.import_experiment(exp_name, exp_input_dir)
+    except Exception:
+        import traceback
+        traceback.print_exc()
+
 def import_experiments(input_dir, experiment_name_prefix, use_src_user_id, import_metadata_tags):
     start_time = time.time()
     manifest_path = os.path.join(input_dir,"experiments","manifest.json")
     manifest = utils.read_json_file(manifest_path)
     exps = manifest["experiments"]
-    importer = ExperimentImporter(None, use_src_user_id, import_metadata_tags)
+
+    importer = ExperimentImporter(None,
+        use_src_user_id=use_src_user_id,
+        import_metadata_tags=import_metadata_tags)
+
     print("Experiments:")
     for exp in exps: 
         print(" ",exp)
     run_info_map = {}
     exceptions = []
-    for exp in exps: 
+
+    print("No Thread")
+    for exp in exps:
         exp_input_dir = os.path.join(input_dir, "experiments", exp["id"])
         try:
             exp_name = experiment_name_prefix + exp["name"] if experiment_name_prefix else exp["name"]
             _run_info_map = importer.import_experiment(exp_name, exp_input_dir)
+            print(_run_info_map)
             run_info_map[exp["id"]] = _run_info_map
+            print(run_info_map)
         except Exception as e:
             exceptions.append(e)
             import traceback
             traceback.print_exc()
+
+    print("With thread")
+    max_workers = os.cpu_count() or 4 if True else 1
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        for exp in exps:
+            exp_input_dir = os.path.join(input_dir, "experiments", exp["id"])
+            exp_name = experiment_name_prefix + exp["name"] if experiment_name_prefix else exp["name"]
+            _run_info_map = executor.submit(_import_experiment, importer, exp_name, exp_input_dir)
+            run_info_map[exp["id"]] = _run_info_map
+            print(run_info_map)
 
     duration = round(time.time() - start_time, 1)
     if len(exceptions) > 0:
