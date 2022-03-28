@@ -6,6 +6,7 @@ import os
 import time
 import json
 import click
+import pickle
 from concurrent.futures import ThreadPoolExecutor
 import mlflow
 from mlflow_export_import import utils, click_doc
@@ -43,22 +44,7 @@ def import_experiments(input_dir, experiment_name_prefix, use_src_user_id, impor
     print("Experiments:")
     for exp in exps: 
         print(" ",exp)
-    run_info_map = {}
-    exceptions = []
 
-    print("No Thread")
-    for exp in exps:
-        exp_input_dir = os.path.join(input_dir, "experiments", exp["id"])
-        try:
-            exp_name = experiment_name_prefix + exp["name"] if experiment_name_prefix else exp["name"]
-            _run_info_map = importer.import_experiment(exp_name, exp_input_dir)
-            run_info_map[exp["id"]] = _run_info_map
-        except Exception as e:
-            exceptions.append(e)
-            import traceback
-            traceback.print_exc()
-    print(run_info_map)
-    print("With thread")
     max_workers = os.cpu_count() or 4 if True else 1
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         thread_f = {}
@@ -72,7 +58,6 @@ def import_experiments(input_dir, experiment_name_prefix, use_src_user_id, impor
     for each_f in thread_f:
         run_info_map[each_f] = thread_f[each_f].result()
 
-    print(run_info_map)
     duration = round(time.time() - start_time, 1)
     if len(exceptions) > 0:
         print(f"Errors: {len(exceptions)}")
@@ -100,6 +85,13 @@ def import_models(input_dir, run_info_map, delete_model, verbose, use_threads):
 def import_all(input_dir, delete_model, use_src_user_id, import_metadata_tags, verbose, use_threads, experiment_name_prefix):
     start_time = time.time()
     exp_res = import_experiments(input_dir, experiment_name_prefix, use_src_user_id, import_metadata_tags)
+
+    with open('exp_res.pkl', 'wb') as f:
+        pickle.dump(exp_res, f)
+
+    with open('exp_res.pkl', 'rb') as f:
+        exp_res = pickle.load(f)
+
     run_info_map = _remap(exp_res[0])
     model_res = import_models(input_dir, run_info_map, delete_model, verbose, use_threads)
     duration = round(time.time() - start_time, 1)
