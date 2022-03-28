@@ -70,7 +70,7 @@ def import_models(input_dir, run_info_map, delete_model, verbose, use_threads):
 
 def import_all(input_dir, delete_model, use_src_user_id, import_metadata_tags, verbose, use_threads, experiment_name_prefix):
     start_time = time.time()
-    exp_res = import_experiments(input_dir, use_src_user_id, import_metadata_tags)
+    exp_res = import_experiments(input_dir, experiment_name_prefix, use_src_user_id, import_metadata_tags)
     run_info_map = _remap(exp_res[0])
     model_res = import_models(input_dir, run_info_map, delete_model, verbose, use_threads)
     duration = round(time.time() - start_time, 1)
