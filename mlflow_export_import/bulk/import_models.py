@@ -51,24 +51,25 @@ def import_experiments(input_dir, experiment_name_prefix, use_src_user_id, impor
         try:
             exp_name = experiment_name_prefix + exp["name"] if experiment_name_prefix else exp["name"]
             _run_info_map = importer.import_experiment(exp_name, exp_input_dir)
-            print(_run_info_map)
             run_info_map[exp["id"]] = _run_info_map
-            print(run_info_map)
         except Exception as e:
             exceptions.append(e)
             import traceback
             traceback.print_exc()
-
+    print(run_info_map)
     print("With thread")
     max_workers = os.cpu_count() or 4 if True else 1
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        thread_f = {}
         for exp in exps:
             exp_input_dir = os.path.join(input_dir, "experiments", exp["id"])
             exp_name = experiment_name_prefix + exp["name"] if experiment_name_prefix else exp["name"]
-            _run_info_map = executor.submit(_import_experiment, importer, exp_name, exp_input_dir)
-            run_info_map[exp["id"]] = _run_info_map
-            print(run_info_map)
+            thread_f[exp["id"]] = executor.submit(_import_experiment, importer, exp_name, exp_input_dir)
 
+    run_info_map = {}
+    for each_f in thread_f:
+        run_info_map[each_f] = thread_f[each_f].result()
+    print(run_info_map)
     duration = round(time.time() - start_time, 1)
     if len(exceptions) > 0:
         print(f"Errors: {len(exceptions)}")
