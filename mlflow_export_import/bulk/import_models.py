@@ -31,7 +31,7 @@ def _import_experiment(importer, exp_name, exp_input_dir):
         import traceback
         traceback.print_exc()
 
-def import_experiments(input_dir, experiment_name_prefix, use_src_user_id, import_metadata_tags):
+def import_experiments(input_dir, experiment_name_prefix, use_src_user_id, import_metadata_tags, use_threads):
     start_time = time.time()
     manifest_path = os.path.join(input_dir,"experiments","manifest.json")
     manifest = utils.read_json_file(manifest_path)
@@ -41,9 +41,8 @@ def import_experiments(input_dir, experiment_name_prefix, use_src_user_id, impor
     for exp in exps: 
         print(" ",exp)
 
-    use_thread = True
-    print("Using thread")
-    if not use_thread:
+    if not use_threads:
+        print("Not using threads ......")
         run_info_map = {}
         exceptions = []
         for exp in exps:
@@ -57,8 +56,9 @@ def import_experiments(input_dir, experiment_name_prefix, use_src_user_id, impor
                 import traceback
                 traceback.print_exc()
 
-    if use_thread:
-        max_workers = os.cpu_count() or 4 if use_thread else 1
+    if use_threads:
+        print("Using threads ......")
+        max_workers = os.cpu_count() or 4 if use_threads else 1
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             thread_f = {}
             for exp in exps:
@@ -76,8 +76,6 @@ def import_experiments(input_dir, experiment_name_prefix, use_src_user_id, impor
     if len(exceptions) > 0:
         print(f"Errors: {len(exceptions)}")
     print(f"Duration: {duration} seconds")
-
-
     return run_info_map, { "experiments": len(exps), "exceptions": exceptions, "duration": duration }
 
 def import_models(input_dir, run_info_map, delete_model, verbose, use_threads):
@@ -100,17 +98,17 @@ def import_models(input_dir, run_info_map, delete_model, verbose, use_threads):
 def import_all(input_dir, delete_model, use_src_user_id, import_metadata_tags, verbose, use_threads, experiment_name_prefix):
     start_time = time.time()
     exp_res = import_experiments(input_dir, experiment_name_prefix, use_src_user_id, import_metadata_tags)
-
+    print("Saving run mapping info")
     with open('exp_res.pkl', 'wb') as f:
         pickle.dump(exp_res, f)
 
+    print("Loading run mapping info")
     with open('exp_res.pkl', 'rb') as f:
-        exp_res = pickle.load(f)
-
-    run_info_map = _remap(exp_res[0])
+        exp_results = pickle.load(f)
+    run_info_map = _remap(exp_results[0])
     model_res = import_models(input_dir, run_info_map, delete_model, verbose, use_threads)
     duration = round(time.time() - start_time, 1)
-    dct = { "duration": duration, "experiment_import": exp_res[1], "model_import": model_res }
+    dct = { "duration": duration, "experiment_import": exp_results[1], "model_import": model_res }
     fs = _filesystem.get_filesystem(".")
     utils.write_json_file(fs, "import_report.json", dct)
     print("\nImport report:")
