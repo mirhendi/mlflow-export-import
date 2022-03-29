@@ -106,7 +106,9 @@ def import_all(input_dir, delete_model, use_src_user_id, import_metadata_tags, v
     with open('exp_res.pkl', 'rb') as f:
         exp_results = pickle.load(f)
     run_info_map = _remap(exp_results[0])
-    model_res = import_models(input_dir, run_info_map, delete_model, verbose, use_threads)
+
+    models_input_dir = os.path.join(input_dir,"models")
+    model_res = import_models(models_input_dir, run_info_map, delete_model, verbose, use_threads)
     duration = round(time.time() - start_time, 1)
     dct = { "duration": duration, "experiment_import": exp_results[1], "model_import": model_res }
     fs = _filesystem.get_filesystem(".")

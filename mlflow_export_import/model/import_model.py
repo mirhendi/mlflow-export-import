@@ -103,10 +103,8 @@ class BaseModelImporter():
             data['access_control_list'] = [permission_dic]
             try:
                 self.dbx_client.patch(resource="preview/permissions/registered-models/{}".format(model_id), data=data)
-                print("One permission imported")
             except Exception as e:
                 print("One permission couldn't be imported", e, data)
-                print(data)
         print("Model's permissions imported for", model_name)
 
 

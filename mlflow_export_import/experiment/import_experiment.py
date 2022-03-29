@@ -75,10 +75,8 @@ class ExperimentImporter():
             data['access_control_list'] = [permission_dic]
             try:
                 self.dbx_client.patch(resource="preview/permissions/experiments/{}".format(dst_exp_id), data=data)
-                print("One permission imported")
             except Exception as e:
-                print("One permission couldn't be imported", e)
-                print(data)
+                print("One permission couldn't be imported", e, data)
 
 @click.command()
 @click.option("--input-dir",
