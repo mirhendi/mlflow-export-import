@@ -42,6 +42,7 @@ def import_experiments(input_dir, experiment_name_prefix, use_src_user_id, impor
         print(" ",exp)
 
     use_thread = True
+    print("Using thread")
     if not use_thread:
         run_info_map = {}
         exceptions = []
