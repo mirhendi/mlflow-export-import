@@ -23,6 +23,14 @@ def _remap(run_info_map):
             res[src_run_id] = run_info
     return res
 
+def _import_experiment(importer, exp_name, exp_input_dir):
+    try:
+        _run_info_map = importer.import_experiment(exp_name, exp_input_dir)
+        return _run_info_map
+    except Exception:
+        import traceback
+        traceback.print_exc()
+
 def import_experiments(input_dir, experiment_name_prefix, use_src_user_id, import_metadata_tags):
     start_time = time.time()
     manifest_path = os.path.join(input_dir,"experiments","manifest.json")
@@ -32,23 +40,42 @@ def import_experiments(input_dir, experiment_name_prefix, use_src_user_id, impor
     print("Experiments:")
     for exp in exps: 
         print(" ",exp)
-    run_info_map = {}
-    exceptions = []
-    for exp in exps:
-        exp_input_dir = os.path.join(input_dir, "experiments", exp["id"])
-        try:
-            exp_name = experiment_name_prefix + exp["name"] if experiment_name_prefix else exp["name"]
-            _run_info_map = importer.import_experiment( exp_name, exp_input_dir)
-            run_info_map[exp["id"]] = _run_info_map
-        except Exception as e:
-            exceptions.append(e)
-            import traceback
-            traceback.print_exc()
+
+    use_thread = True
+    if not use_thread:
+        run_info_map = {}
+        exceptions = []
+        for exp in exps:
+            exp_input_dir = os.path.join(input_dir, "experiments", exp["id"])
+            try:
+                exp_name = experiment_name_prefix + exp["name"] if experiment_name_prefix else exp["name"]
+                _run_info_map = importer.import_experiment( exp_name, exp_input_dir)
+                run_info_map[exp["id"]] = _run_info_map
+            except Exception as e:
+                exceptions.append(e)
+                import traceback
+                traceback.print_exc()
+
+    if use_thread:
+        max_workers = os.cpu_count() or 4 if use_thread else 1
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            thread_f = {}
+            for exp in exps:
+                exp_input_dir = os.path.join(input_dir, "experiments", exp["id"])
+                exp_name = experiment_name_prefix + exp["name"] if experiment_name_prefix else exp["name"]
+                thread_f[exp["id"]] = executor.submit(_import_experiment, importer, exp_name, exp_input_dir)
+        run_info_map = {}
+        exceptions = {}
+        for each_f in thread_f:
+            result = thread_f[each_f].result()
+            if result is not None:
+                run_info_map[each_f] = thread_f[each_f].result()
 
     duration = round(time.time() - start_time, 1)
     if len(exceptions) > 0:
         print(f"Errors: {len(exceptions)}")
     print(f"Duration: {duration} seconds")
+
 
     return run_info_map, { "experiments": len(exps), "exceptions": exceptions, "duration": duration }
 
