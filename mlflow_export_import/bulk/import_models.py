@@ -6,6 +6,7 @@ import os
 import time
 import json
 import click
+import pickle
 from concurrent.futures import ThreadPoolExecutor
 import mlflow
 from mlflow_export_import import utils, click_doc
@@ -71,12 +72,19 @@ def import_models(input_dir, run_info_map, delete_model, verbose, use_threads):
 def import_all(input_dir, delete_model, use_src_user_id, import_metadata_tags, verbose, use_threads, experiment_name_prefix):
     start_time = time.time()
     exp_res = import_experiments(input_dir, experiment_name_prefix, use_src_user_id, import_metadata_tags)
+
+    with open('exp_res.pkl', 'wb') as f:
+        pickle.dump(exp_res, f)
+
+    with open('exp_res.pkl', 'rb') as f:
+        exp_res = pickle.load(f)
+
     run_info_map = _remap(exp_res[0])
     model_res = import_models(input_dir, run_info_map, delete_model, verbose, use_threads)
     duration = round(time.time() - start_time, 1)
     dct = { "duration": duration, "experiment_import": exp_res[1], "model_import": model_res }
-    #fs = _filesystem.get_filesystem(".")
-    #utils.write_json_file(fs, "import_report.json", json.dumps(dct))
+    fs = _filesystem.get_filesystem(".")
+    utils.write_json_file(fs, "import_report.json", dct)
     print("\nImport report:")
     print(json.dumps(dct,indent=2)+"\n")
 

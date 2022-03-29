@@ -71,11 +71,16 @@ class BaseModelImporter():
             tags = { e["key"]:e["value"] for e in model_dct.get("tags", {}) }
             self.mlflow_client.create_registered_model(model_name, tags, model_dct.get("description"))
             print(f"Created new registered model '{model_name}'")
-            self._import_permissions(model_name, input_dir)
         except RestException as e:
             if not "RESOURCE_ALREADY_EXISTS: Registered Model" in str(e):
                 raise e
             print(f"Registered model '{model_name}' already exists")
+
+        try:
+            self._import_permissions(model_name, input_dir)
+        except Exception as e:
+            print("Model's permissions NOT imported for", model_name)
+            print("Error:", e)
 
         return model_dct
 
@@ -86,8 +91,8 @@ class BaseModelImporter():
         permissions_path = os.path.join(input_dir, "permissions.json")
         permissions_data = utils.read_json_file(permissions_path)
 
-        ac_list = []
         for each_ac in permissions_data['access_control_list']:
+            data = {}
             permission_dic = {}
             try:
                 permission_dic['user_name'] = each_ac['user_name']
@@ -95,15 +100,14 @@ class BaseModelImporter():
                 permission_dic['group_name'] = each_ac['group_name']
 
             permission_dic['permission_level'] = each_ac['all_permissions'][0]['permission_level']
-            ac_list.append(permission_dic)
-        data = {'access_control_list': ac_list}
-
-        try:
-            self.dbx_client.put(resource="preview/permissions/registered-models/{}".format(model_id), data=data)
-            print("Model's permissions imported for", model_id)
-        except:
-            print("Model's permissions NOT imported for", model_id)
-
+            data['access_control_list'] = [permission_dic]
+            try:
+                self.dbx_client.patch(resource="preview/permissions/registered-models/{}".format(model_id), data=data)
+                print("One permission imported")
+            except Exception as e:
+                print("One permission couldn't be imported", e, data)
+                print(data)
+        print("Model's permissions imported for", model_name)
 
 
 class ModelImporter(BaseModelImporter):
