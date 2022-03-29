@@ -129,7 +129,7 @@ export-models \
 
 ### Import registered models 
 
-Source: [import_models.py](mlflow_export_import/bulk/import_models.py).
+Source: [import_models.py](mlflow_export_import/bulk/import_all.py).
 
 #### Usage
 ```

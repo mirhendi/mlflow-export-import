@@ -5,7 +5,7 @@ from compare_utils import compare_runs
 
 from mlflow_export_import.model.export_model import ModelExporter
 from mlflow_export_import.bulk.export_models import export_models
-from mlflow_export_import.bulk.import_models import import_all
+from mlflow_export_import.bulk.import_all import import_all
 from mlflow_export_import.bulk import bulk_utils
 from test_bulk_experiments import create_test_experiment
 
