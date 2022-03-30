@@ -10,7 +10,7 @@ from mlflow_export_import.bulk.export_experiments import export_experiments
 from mlflow_export_import import click_doc
 from mlflow_export_import.bulk import write_export_manifest_file
 
-ALL_STAGES = "Production,Staging,Archive,None" 
+ALL_STAGES = "Production,Staging,Archived,None"
 
 @click.command()
 @click.option("--output-dir", 
