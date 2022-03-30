@@ -14,7 +14,8 @@ def delete_model(client, model_name, sleep_time=5):
             client.delete_model_version(model_name, v.version)
         client.delete_registered_model(model_name)
     except RestException:
-        pass
+        print('didnt delete')
+
 
 def wait_until_version_is_ready(client, model_name, model_version, sleep_time=1, iterations=100):
     """ Due to blob eventual consistency, wait until a newly created version is in READY state. """
