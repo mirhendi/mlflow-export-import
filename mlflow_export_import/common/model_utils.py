@@ -15,6 +15,8 @@ def delete_model(client, model_name, sleep_time=5):
         client.delete_registered_model(model_name)
     except RestException:
         print('didnt delete')
+        import traceback
+        traceback.print_exc()
 
 
 def wait_until_version_is_ready(client, model_name, model_version, sleep_time=1, iterations=100):
