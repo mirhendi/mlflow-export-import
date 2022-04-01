@@ -1,26 +1,21 @@
 import time
-from mlflow.exceptions import RestException
 from mlflow.entities.model_registry.model_version_status import ModelVersionStatus
-import mlflow
 
-def delete_model(client, model_name, sleep_time=15):
+def delete_model(client, model_name, sleep_time=5):
     """ Delete a model and all its versions. """
-    client = Samimlflow.tracking.MlflowClient()
-
     try:
         versions = client.search_model_versions(f"name='{model_name}'")
         print(f"Deleting model '{model_name}' and {len(versions)} versions")
         for v in versions:
             print(f"  version={v.version} status={v.status} stage={v.current_stage} run_id={v.run_id}")
-            client.transition_model_version_stage (model_name, v.version, "Archived")
-            time.sleep(sleep_time) # Wait until stage transition takes hold
-            client.delete_model_version(model_name, v.version)
+            if v.current_stage != "Archived":
+                client.transition_model_version_stage (model_name, v.version, "Archived")
+                time.sleep(sleep_time) # Wait until stage transition takes hold
         time.sleep(sleep_time)
         client.delete_registered_model(model_name)
-        raise
         return 'Done'
-    except RestException as e:
-        print('e')
+    except Exception as e:
+        print(e)
 
 def wait_until_version_is_ready(client, model_name, model_version, sleep_time=1, iterations=100):
     """ Due to blob eventual consistency, wait until a newly created version is in READY state. """

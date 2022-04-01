@@ -70,7 +70,7 @@ class BaseModelImporter():
         print(status)
         try:
             tags = { e["key"]:e["value"] for e in model_dct.get("tags", {}) }
-            #self.mlflow_client.create_registered_model(model_name, tags, model_dct.get("description"))
+            self.mlflow_client.create_registered_model(model_name, tags, model_dct.get("description"))
             print(f"Created new registered model '{model_name}'")
         except RestException as e:
             if not "RESOURCE_ALREADY_EXISTS: Registered Model" in str(e):
@@ -167,7 +167,7 @@ class AllModelImporter(BaseModelImporter):
         for vr in model_dct["latest_versions"]:
             src_run_id = vr["run_id"]
             dst_run_id = self.run_info_map[src_run_id].run_id
-            #self.import_version(model_name, vr, dst_run_id, sleep_time)
+            self.import_version(model_name, vr, dst_run_id, sleep_time)
         if verbose:
             model_utils.dump_model_versions(self.mlflow_client, model_name)
 
