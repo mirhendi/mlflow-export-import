@@ -66,8 +66,8 @@ class BaseModelImporter():
             model_name = model_dct["name"]
 
         if delete_model:
-            status = model_utils.delete_model(self.mlflow_client, model_name)
-        print(status)
+            model_utils.delete_model(self.mlflow_client, model_name)
+
         try:
             tags = { e["key"]:e["value"] for e in model_dct.get("tags", {}) }
             self.mlflow_client.create_registered_model(model_name, tags, model_dct.get("description"))

@@ -11,6 +11,7 @@ def delete_model(client, model_name, sleep_time=5):
             if v.current_stage != "Archived":
                 client.transition_model_version_stage (model_name, v.version, "Archived")
                 time.sleep(sleep_time) # Wait until stage transition takes hold
+                client.delete_model_version(model_name, v.version)
         time.sleep(sleep_time)
         client.delete_registered_model(model_name)
         return 'Done'
