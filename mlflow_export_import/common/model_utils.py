@@ -14,6 +14,7 @@ def delete_model(client, model_name, sleep_time=15):
             client.delete_model_version(model_name, v.version)
         time.sleep(sleep_time)
         client.delete_registered_model(model_name)
+        return 'Done'
     except RestException as e:
         print('e')
 
