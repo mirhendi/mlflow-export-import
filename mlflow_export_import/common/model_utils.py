@@ -1,9 +1,12 @@
 import time
 from mlflow.exceptions import RestException
 from mlflow.entities.model_registry.model_version_status import ModelVersionStatus
+import mlflow
 
 def delete_model(client, model_name, sleep_time=15):
     """ Delete a model and all its versions. """
+    client = Samimlflow.tracking.MlflowClient()
+
     try:
         versions = client.search_model_versions(f"name='{model_name}'")
         print(f"Deleting model '{model_name}' and {len(versions)} versions")

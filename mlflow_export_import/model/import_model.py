@@ -69,7 +69,7 @@ class BaseModelImporter():
         print(status)
         try:
             tags = { e["key"]:e["value"] for e in model_dct.get("tags", {}) }
-            self.mlflow_client.create_registered_model(model_name, tags, model_dct.get("description"))
+            #self.mlflow_client.create_registered_model(model_name, tags, model_dct.get("description"))
             print(f"Created new registered model '{model_name}'")
         except RestException as e:
             if not "RESOURCE_ALREADY_EXISTS: Registered Model" in str(e):
