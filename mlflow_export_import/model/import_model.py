@@ -64,6 +64,7 @@ class BaseModelImporter():
 
         if not model_name:
             model_name = model_dct["name"]
+
         if delete_model:
             status = model_utils.delete_model(self.mlflow_client, model_name)
         print(status)
