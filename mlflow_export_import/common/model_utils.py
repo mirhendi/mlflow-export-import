@@ -2,7 +2,7 @@ import time
 from mlflow.exceptions import RestException
 from mlflow.entities.model_registry.model_version_status import ModelVersionStatus
 
-def delete_model(client, model_name, sleep_time=5):
+def delete_model(client, model_name, sleep_time=15):
     """ Delete a model and all its versions. """
     try:
         versions = client.get_latest_versions(model_name)
@@ -12,12 +12,10 @@ def delete_model(client, model_name, sleep_time=5):
             client.transition_model_version_stage (model_name, v.version, "Archived")
             time.sleep(sleep_time) # Wait until stage transition takes hold
             client.delete_model_version(model_name, v.version)
+        time.sleep(sleep_time)
         client.delete_registered_model(model_name)
-    except RestException:
-        print('didnt delete')
-        import traceback
-        traceback.print_exc()
-
+    except RestException as e:
+        print('e')
 
 def wait_until_version_is_ready(client, model_name, model_version, sleep_time=1, iterations=100):
     """ Due to blob eventual consistency, wait until a newly created version is in READY state. """

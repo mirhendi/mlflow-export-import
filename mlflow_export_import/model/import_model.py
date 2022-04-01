@@ -162,10 +162,10 @@ class AllModelImporter(BaseModelImporter):
     def import_model(self, model_name, input_dir, delete_model=False, verbose=False, sleep_time=30):
         model_dct = self._import_model(model_name, input_dir, delete_model, verbose, sleep_time)
         print("Importing latest versions:")
+        model_dct["latest_versions"].sort(key=lambda x: int(x['version']))
         for vr in model_dct["latest_versions"]:
             src_run_id = vr["run_id"]
             dst_run_id = self.run_info_map[src_run_id].run_id
-            #mlflow.set_experiment(vr["_experiment_name"])
             self.import_version(model_name, vr, dst_run_id, sleep_time)
         if verbose:
             model_utils.dump_model_versions(self.mlflow_client, model_name)
