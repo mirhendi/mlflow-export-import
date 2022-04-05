@@ -97,10 +97,10 @@ def import_models(input_dir, run_info_map, delete_model, verbose, use_threads):
 
 def import_all(input_dir, delete_model, use_src_user_id, import_metadata_tags, verbose, use_threads, experiment_name_prefix):
     start_time = time.time()
-    #exp_res = import_experiments(input_dir, experiment_name_prefix, use_src_user_id, import_metadata_tags, use_threads)
-    #print("Saving run mapping info")
-    #with open('exp_res.pkl', 'wb') as f:
-    #    pickle.dump(exp_res, f)
+    exp_res = import_experiments(input_dir, experiment_name_prefix, use_src_user_id, import_metadata_tags, use_threads)
+    print("Saving run mapping info")
+    with open('exp_res.pkl', 'wb') as f:
+        pickle.dump(exp_res, f)
 
     print("Loading run mapping info")
     with open('exp_res.pkl', 'rb') as f:
