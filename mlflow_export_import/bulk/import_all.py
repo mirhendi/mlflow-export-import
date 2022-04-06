@@ -13,6 +13,8 @@ from mlflow_export_import import utils, click_doc
 from mlflow_export_import.common import filesystem as _filesystem
 from mlflow_export_import.experiment.import_experiment import ExperimentImporter
 from mlflow_export_import.model.import_model import AllModelImporter
+from mlflow_export_import.common.http_client import DatabricksHttpClient
+from mlflow_export_import.common.mlflow_utils import create_workspace_dir
 
 print("MLflow Tracking URI:", mlflow.get_tracking_uri())
 
@@ -41,36 +43,31 @@ def import_experiments(input_dir, experiment_name_prefix, use_src_user_id, impor
     for exp in exps: 
         print(" ",exp)
 
-    if not use_threads:
-        print("Not using threads ......")
-        run_info_map = {}
-        exceptions = []
+    max_workers = os.cpu_count() or 4 if use_threads else 1
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        thread_f = {}
         for exp in exps:
             exp_input_dir = os.path.join(input_dir, "experiments", exp["id"])
-            try:
-                exp_name = experiment_name_prefix + exp["name"] if experiment_name_prefix else exp["name"]
-                _run_info_map = importer.import_experiment( exp_name, exp_input_dir)
-                run_info_map[exp["id"]] = _run_info_map
-            except Exception as e:
-                exceptions.append(e)
-                import traceback
-                traceback.print_exc()
+            exp_name = experiment_name_prefix + exp["name"] if experiment_name_prefix else exp["name"]
 
-    if use_threads:
-        print("Using threads ......")
-        max_workers = os.cpu_count() or 4 if use_threads else 1
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            thread_f = {}
-            for exp in exps:
-                exp_input_dir = os.path.join(input_dir, "experiments", exp["id"])
-                exp_name = experiment_name_prefix + exp["name"] if experiment_name_prefix else exp["name"]
-                thread_f[exp["id"]] = executor.submit(_import_experiment, importer, exp_name, exp_input_dir)
-        run_info_map = {}
-        exceptions = {}
-        for each_f in thread_f:
-            result = thread_f[each_f].result()
-            if result is not None:
-                run_info_map[each_f] = thread_f[each_f].result()
+            if not experiment_name_prefix:
+                dbx_client = DatabricksHttpClient()
+                try:
+                    os.path.dirname(exp_name)
+                    create_workspace_dir(dbx_client, os.path.dirname(exp_name))
+                except:
+                    exp_name = '/ml_migration' + exp["name"]
+                    os.path.dirname(exp_name)
+                    create_workspace_dir(dbx_client, os.path.dirname(exp_name))
+                    print("Changing exp name")
+
+            thread_f[exp["id"]] = executor.submit(_import_experiment, importer, exp_name, exp_input_dir)
+    run_info_map = {}
+    exceptions = {}
+    for each_f in thread_f:
+        result = thread_f[each_f].result()
+        if result is not None:
+            run_info_map[each_f] = thread_f[each_f].result()
 
     duration = round(time.time() - start_time, 1)
     if len(exceptions) > 0:
