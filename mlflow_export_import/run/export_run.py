@@ -86,7 +86,10 @@ class RunExporter():
     def export_notebook(self, output_dir, notebook, tags, fs):
         notebook_dir = os.path.join(output_dir,"artifacts","notebooks")
         fs.mkdirs(notebook_dir)
-        revision_id = tags["mlflow.databricks.notebookRevisionID"]
+        try:
+            revision_id = tags["mlflow.databricks.notebookRevisionID"]
+        except:
+            revision_id = '?'
         notebook_path = tags["mlflow.databricks.notebookPath"]
         notebook_name = os.path.basename(notebook_path)
         manifest = { 
