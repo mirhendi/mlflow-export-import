@@ -56,10 +56,10 @@ def import_experiments(input_dir, experiment_name_prefix, use_src_user_id, impor
                     os.path.dirname(exp_name)
                     create_workspace_dir(dbx_client, os.path.dirname(exp_name))
                 except:
+                    print("Could not create dir, Changing exp name")
                     exp_name = '/ml_migration' + exp["name"]
                     os.path.dirname(exp_name)
                     create_workspace_dir(dbx_client, os.path.dirname(exp_name))
-                    print("Changing exp name")
 
             thread_f[exp["id"]] = executor.submit(_import_experiment, importer, exp_name, exp_input_dir)
     run_info_map = {}

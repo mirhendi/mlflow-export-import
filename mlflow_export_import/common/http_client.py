@@ -43,7 +43,6 @@ class HttpClient():
         uri = self._mk_uri(resource)
         data = json.dumps(data)
         rsp = requests.post(uri, headers=self._mk_headers(), data=data)
-        print(rsp.json())
         self._check_response(rsp,uri)
         return rsp
 
@@ -89,6 +88,7 @@ class HttpClient():
 
     def _check_response(self, rsp, uri, params=None):
         if rsp.status_code < 200 or rsp.status_code > 299:
+            print(rsp.json())
             raise MlflowExportImportException(f"HTTP status code: {rsp.status_code}. Reason: {rsp.reason}. URI: {uri}. Params: {params}.")
 
     def __repr__(self): 
